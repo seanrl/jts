@@ -60,7 +60,7 @@ public class IsValidOp
 	
   /**
    * Checks whether a coordinate is valid for processing.
-   * Coordinates are valid iff their x and y ordinates are in the
+   * Coordinates are valid if their x and y ordinates are in the
    * range of the floating point representation.
    *
    * @param coord the coordinate to validate
@@ -407,11 +407,15 @@ public class IsValidOp
   private void checkNoSelfIntersectingRing(EdgeIntersectionList eiList)
   {
     Set nodeSet = new TreeSet();
-    boolean isFirst = true;
     for (Iterator i = eiList.iterator(); i.hasNext(); ) {
       EdgeIntersection ei = (EdgeIntersection) i.next();
-      if (isFirst) {
-        isFirst = false;
+      /**
+       * Do not count start point, so start/end node is not counted as a self-intersection.
+       * Another segment with a node in same location will still trigger an invalid error.
+       * (Note that the edgeIntersectionList may not contain the start/end node, 
+       * due to noding short-circuiting.)
+       */
+      if (isStartNode(ei)) {
         continue;
       }
       if (nodeSet.contains(ei.coord)) {
@@ -424,6 +428,10 @@ public class IsValidOp
         nodeSet.add(ei.coord);
       }
     }
+  }
+
+  private static boolean isStartNode(EdgeIntersection ei) {
+    return ei.getSegmentIndex() == 0 && ei.getDistance() == 0.0;
   }
 
   /**

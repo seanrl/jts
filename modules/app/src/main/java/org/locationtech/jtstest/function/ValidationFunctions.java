@@ -15,16 +15,20 @@ package org.locationtech.jtstest.function;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.locationtech.jts.algorithm.BoundaryNodeRule;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.CoordinateArrays;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.Polygonal;
 import org.locationtech.jts.geom.util.GeometryFixer;
 import org.locationtech.jts.geom.util.LinearComponentExtracter;
 import org.locationtech.jts.operation.overlayng.OverlayNG;
 import org.locationtech.jts.operation.overlayng.OverlayNGRobust;
 import org.locationtech.jts.operation.polygonize.Polygonizer;
+import org.locationtech.jts.operation.valid.IsSimpleOp;
 import org.locationtech.jts.operation.valid.IsValidOp;
 import org.locationtech.jts.operation.valid.TopologyValidationError;
+import org.locationtech.jtstest.geomfunction.Metadata;
 
 
 public class ValidationFunctions
@@ -91,9 +95,39 @@ public class ValidationFunctions
   public static Geometry fixInvalid(Geometry geom) {
     return GeometryFixer.fix(geom);
   }
+  
   public static Geometry fixInvalidKeepCollapse(Geometry geom) {
     GeometryFixer fixer = new GeometryFixer(geom);
     fixer.setKeepCollapsed(true);
     return fixer.getResult();
   }
+  
+  public static boolean isSimple(Geometry geom) {
+    return IsSimpleOp.isSimple(geom);
+  }
+  
+  @Metadata(description="Finds all non-simple points using the OGC Mod-2 Boundary Node Rule")
+  public static Geometry nonSimpleAllPoints(Geometry geom) {
+    IsSimpleOp op = new IsSimpleOp(geom);
+    op.setFindAllLocations(true);
+    List<Coordinate> pts = op.getNonSimpleLocations();
+    return geom.getFactory().createMultiPointFromCoords(CoordinateArrays.toCoordinateArray(pts));
+  }
+  
+  @Metadata(description="Find a non-simple point")
+  public static Geometry nonSimplePoint(Geometry geom) {
+    IsSimpleOp op = new IsSimpleOp(geom);
+    Coordinate pt = op.getNonSimpleLocation();
+    return geom.getFactory().createPoint(pt);
+  }
+  
+  @Metadata(description="Finds all non-simple points using the Endpoint Boundary Node Rule")
+  public static Geometry nonSimpleEndpoints(Geometry geom) {
+    IsSimpleOp op = new IsSimpleOp(geom, BoundaryNodeRule.ENDPOINT_BOUNDARY_RULE);
+    op.setFindAllLocations(true);
+    List<Coordinate> pts = op.getNonSimpleLocations();
+    return geom.getFactory().createMultiPointFromCoords(CoordinateArrays.toCoordinateArray(pts));
+  }
+  
+
 }
